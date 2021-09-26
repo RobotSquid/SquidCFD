@@ -47,7 +47,7 @@ class Mesh:
     def generate(self, width, height, layers=50, cap=15):
         base_diff = np.diff(self.obj, axis=0)
         base = np.sum(np.sqrt(base_diff[:,0]**2 + base_diff[:,1]**2))/(len(base_diff))
-        self.points = self.obj
+        self.raw_points = self.obj
         last_layer = self.obj
         dist = base*((3/4)**(1/2))
         count = len(self.obj)
@@ -57,16 +57,16 @@ class Mesh:
             circ = np.sum(np.sqrt(diffs[:,0]**2+diffs[:,1]**2))
             count = circ/(dist*2/np.sqrt(3))
             if dist < cap*base*((3/4)**(1/2)):
-                dist *= 1.1
-            self.points = np.concatenate((self.points, last_layer))
+                dist *= 1.15
+            self.raw_points = np.concatenate((self.raw_points, last_layer))
         dist /= 2
-        self.points = [node for node in self.points if (-width/2+dist)<node[0]<(width/2-dist) and (-height/2+dist)<node[1]<(height/2-dist)]
-        self.points = np.concatenate((self.points, objects.create_block(width, height, 4*(int(count)//4))))
-        self.volumes = spatial.Delaunay(self.points).simplices
-        self.volumes = [vol for vol in self.volumes if not all(vert < len(self.obj) for vert in vol)]
+        self.raw_points = [node for node in self.raw_points if (-width/2+dist)<node[0]<(width/2-dist) and (-height/2+dist)<node[1]<(height/2-dist)]
+        self.raw_points = np.concatenate((self.raw_points, objects.create_block(width, height, 4*(int(count)//4))))
+        self.raw_volumes = spatial.Delaunay(self.raw_points).simplices
+        self.raw_volumes = [vol for vol in self.raw_volumes if not all(vert < len(self.obj) for vert in vol)]
         
-        self.points = [Point(pos=node) for node in self.points]
-        self.volumes = [Volume(points=vol) for vol in self.volumes]
+        self.points = [Point(pos=node) for node in self.raw_points]
+        self.volumes = [Volume(points=vol) for vol in self.raw_volumes]
         self.faces = []
         assigned = {}
         for vID in range(len(self.volumes)):
