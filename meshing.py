@@ -32,11 +32,25 @@ class Face:
     volumes: list[int] = field(default_factory=list)
 
 @dataclass
+class VolumeFace:
+    norm: np.ndarray = None
+    tan: np.ndarray = None
+    pos: np.ndarray = None
+    area: float = 0
+    boundary: bool = False
+    points: list[int] = field(default_factory=list)
+    neighbor: int = 0
+    delta: float = 0
+    face_dist: float = 0
+    lvec: np.ndarray = None
+
+@dataclass
 class Volume:
     faces: list[int] = field(default_factory=list)
     flipped: list[bool] = field(default_factory=list)
     neighbors: list[int] = field(default_factory=list)
     points: list[int] = field(default_factory=list)
+    face_objs: list[VolumeFace] = field(default_factory=list)
     vol: float = 0
     pos: np.ndarray = None
 
@@ -96,6 +110,20 @@ class Mesh:
             face.boundary = len(face.volumes) == 1
         for volume in self.volumes:
             volume.neighbors = [self.faces[volume.faces[i]].volumes[int(not volume.flipped[i])] if not self.faces[volume.faces[i]].boundary else -1 for i in range(len(volume.faces))]
+            for i in range(len(volume.faces)):
+                glob = self.faces[volume.faces[i]]
+                obj = VolumeFace()
+                obj.norm = glob.norm * (-1 if volume.flipped[i] else 1)
+                obj.tan = glob.tan * (-1 if volume.flipped[i] else 1)
+                obj.pos = glob.pos
+                obj.area = glob.area
+                obj.boundary = glob.boundary
+                obj.neighbor = volume.neighbors[i]
+                obj.points = glob.points[::(1 if volume.flipped[i] else -1)]
+                obj.lvec = volume.pos-self.volumes[obj.neighbor].pos
+                obj.delta = np.sqrt(np.sum((obj.lvec)**2))
+                obj.face_dist = np.sqrt(np.sum((volume.pos-glob.pos)**2))
+                volume.face_objs.append(obj)
         self.pcount = len(self.points)
         self.fcount = len(self.faces)
         self.vcount = len(self.volumes)

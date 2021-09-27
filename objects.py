@@ -21,8 +21,8 @@ def create_naca_airfoil(k, length, res, alpha=0):
     the = np.arctan(np.piecewise(xp, [xp<=p, xp>p], [lambda x: 2*m*(p-x)/(p**2), lambda x: 2*m*(p-x)/((1-p)**2)]))
     yu = yc + yt*np.cos(the)
     yl = yc - yt*np.cos(the)
-    y = np.concatenate((yu[:-1], yl[-1::-1]))*length
-    x = np.concatenate((xa[:-1], xa[-1::-1]))-(length/2)
+    y = np.concatenate((yu[:-1], yl[:0:-1]))*length
+    x = np.concatenate((xa[:-1], xa[:0:-1]))-(length/2)
     c, s = np.cos(alpha), np.sin(alpha)
     R = np.array(((c, s), (-s, c)))
     return np.transpose(R @ np.array([x, y]))
